@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vintage Digital Clock</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Clock">
+<style>
+  /* Plain ES5 / CSS with -webkit- fallbacks so it runs on iPad 2 (iOS 9 Safari). */
+  * { -webkit-box-sizing: border-box; box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+  body {
+    font-family: "American Typewriter", Georgia, "Times New Roman", serif;
+    color: #f6e7c8;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+  }
+  #bg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  .tw1 { -webkit-animation: tw 3.2s ease-in-out infinite alternate; animation: tw 3.2s ease-in-out infinite alternate; }
+  .tw2 { -webkit-animation: tw 4.6s ease-in-out 1s infinite alternate; animation: tw 4.6s ease-in-out 1s infinite alternate; }
+  .tw3 { -webkit-animation: tw 2.4s ease-in-out 0.5s infinite alternate; animation: tw 2.4s ease-in-out 0.5s infinite alternate; }
+  @-webkit-keyframes tw { from { opacity: 0.25; } to { opacity: 1; } }
+  @keyframes tw { from { opacity: 0.25; } to { opacity: 1; } }
+
+  #frame {
+    position: absolute; left: 1.6vmin; top: 1.6vmin; right: 1.6vmin; bottom: 1.6vmin;
+    border: 0.9vmin dotted #e8b04a; border-radius: 3vmin; pointer-events: none;
+  }
+  #frame:before {
+    content: ""; position: absolute; left: 1.1vmin; top: 1.1vmin; right: 1.1vmin; bottom: 1.1vmin;
+    border: 0.25vmin solid #e4694f; border-radius: 2vmin;
+  }
+
+  #stage {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    -webkit-flex-direction: column; flex-direction: column;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
+    padding: 5vmin 4vmin;
+  }
+
+  /* Day + date header */
+  #head { text-align: center; }
+  #day {
+    font-family: "Snell Roundhand", "Apple Chancery", cursive;
+    font-size: 10vmin; line-height: 1.05; color: #e8b04a; font-weight: bold;
+  }
+  #dateRow {
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center;
+    margin-top: 0.6vmin;
+  }
+  #date { font-size: 2.9vmin; letter-spacing: 0.9vmin; text-transform: uppercase; color: #f6e7c8; padding: 0 2.4vmin; }
+  .rule { width: 14vmin; height: 0.3vmin; background: #e4694f; position: relative; }
+  .rule:after { content: ""; position: absolute; top: 50%; width: 1.4vmin; height: 1.4vmin; margin-top: -0.7vmin;
+    background: #4aa39b; -webkit-transform: rotate(45deg); transform: rotate(45deg); }
+  .rule.l:after { right: -0.7vmin; }
+  .rule.r:after { left: -0.7vmin; }
+
+  /* Flip-style clock */
+  #clockRow {
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    -webkit-align-items: flex-end; align-items: flex-end; -webkit-justify-content: center; justify-content: center;
+    margin-top: 2.4vmin;
+  }
+  .card {
+    position: relative; width: 13.5vmin; height: 20vmin; margin: 0 0.6vmin;
+    border-radius: 1.6vmin; overflow: hidden;
+    font: bold 15vmin/20vmin "American Typewriter", Georgia, serif;
+    text-align: center; color: #f6e7c8;
+    background: #26221e;
+    background: -webkit-linear-gradient(top, #2f2a25 0%, #26221e 50%, #1c1916 50%, #221e1a 100%);
+    background: linear-gradient(to bottom, #2f2a25 0%, #26221e 50%, #1c1916 50%, #221e1a 100%);
+    border: 0.3vmin solid #4a4238;
+    -webkit-box-shadow: 0 1vmin 2vmin rgba(0,0,0,0.9), inset 0 0 1.4vmin rgba(0,0,0,0.6);
+    box-shadow: 0 1vmin 2vmin rgba(0,0,0,0.9), inset 0 0 1.4vmin rgba(0,0,0,0.6);
+  }
+  .card:after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 0.3vmin; margin-top: -0.15vmin; background: #000; }
+  .flip { -webkit-animation: flip 0.45s ease-out; animation: flip 0.45s ease-out; }
+  @-webkit-keyframes flip { from { -webkit-transform: scaleY(0.15); } to { -webkit-transform: scaleY(1); } }
+  @keyframes flip { from { transform: scaleY(0.15); } to { transform: scaleY(1); } }
+
+  .colon { width: 4vmin; height: 20vmin; position: relative; -webkit-flex: none; flex: none; }
+  .colon i { position: absolute; left: 50%; width: 1.9vmin; height: 1.9vmin; margin-left: -0.95vmin; border-radius: 50%;
+    background: #e4694f; -webkit-animation: blink 2s steps(1) infinite; animation: blink 2s steps(1) infinite; }
+  .colon i:nth-child(1) { top: 6.5vmin; }
+  .colon i:nth-child(2) { top: 11.6vmin; }
+  @-webkit-keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.2; } }
+  @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.2; } }
+
+  #side { margin-left: 2.4vmin; width: 15vmin; text-align: center; -webkit-flex: none; flex: none; }
+  #ampm {
+    display: inline-block; min-width: 11vmin; padding: 0.6vmin 1.4vmin; margin-bottom: 1.6vmin;
+    border: 0.3vmin solid #e8b04a; border-radius: 2vmin;
+    font-size: 3.2vmin; font-weight: bold; letter-spacing: 0.4vmin; color: #e8b04a;
+  }
+  #secRow { display: -webkit-box; display: -webkit-flex; display: flex; -webkit-justify-content: center; justify-content: center; }
+  .card.sm { width: 6.4vmin; height: 9.4vmin; margin: 0 0.35vmin; border-radius: 1vmin;
+    font: bold 7vmin/9.4vmin "American Typewriter", Georgia, serif; color: #8fd6cd; }
+
+  /* 12H / 24H toggle */
+  #toggle { margin-top: 2.6vmin; display: -webkit-box; display: -webkit-flex; display: flex; }
+  #toggle button {
+    -webkit-appearance: none; appearance: none; outline: none;
+    font-family: "American Typewriter", Georgia, serif; font-weight: bold;
+    font-size: 3vmin; letter-spacing: 0.5vmin;
+    width: 16vmin; height: 6vmin; border: 0.35vmin solid #e8b04a;
+    background: #000; color: #e8b04a;
+  }
+  #b12 { border-radius: 3vmin 0 0 3vmin; border-right-width: 0.175vmin !important; }
+  #b24 { border-radius: 0 3vmin 3vmin 0; border-left-width: 0.175vmin !important; }
+  #toggle button.on { background: #e8b04a; color: #000; }
+
+  /* Panels */
+  #panels {
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    width: 100%; max-width: 124vmin; margin-top: 3vmin; height: 45vmin;
+  }
+  .panel {
+    position: relative; height: 100%;
+    border: 0.4vmin solid #4aa39b; border-radius: 2.4vmin;
+    background: #0b0b0b; padding: 2vmin 2vmin 1.4vmin; text-align: center; overflow: hidden;
+  }
+  #moonPanel { -webkit-flex: 1; flex: 1; margin-right: 3vmin; border-color: #4aa39b; }
+  #calPanel  { -webkit-flex: 1.45; flex: 1.45; border-color: #e4694f; }
+  .kicker { font-size: 2vmin; letter-spacing: 0.7vmin; text-transform: uppercase; color: #4aa39b; }
+  #calPanel .kicker { display: none; }
+  #moonSvg { display: block; width: 24vmin; height: 24vmin; margin: 0 auto; }
+  #phaseName { font-family: "Snell Roundhand", "Apple Chancery", cursive; font-size: 5.2vmin; font-weight: bold; color: #f6e7c8; line-height: 1.1; }
+  #phaseInfo { margin-top: 0.8vmin; font-size: 2.1vmin; color: #8fd6cd; letter-spacing: 0.2vmin; }
+  #phaseNext { margin-top: 0.6vmin; font-size: 1.9vmin; color: #b9a98a; line-height: 1.35; }
+
+  #month { font-family: "Snell Roundhand", "Apple Chancery", cursive; font-size: 6vmin; font-weight: bold; color: #e4694f; line-height: 1.1; margin-bottom: 0.8vmin; }
+  #grid { width: 100%; }
+  #grid:after { content: ""; display: block; clear: both; }
+  #grid div { float: left; width: 14.2857%; height: 5.3vmin; line-height: 5.3vmin; font-size: 2.7vmin; text-align: center; }
+  #grid .dow { font-size: 2.1vmin; color: #e8b04a; letter-spacing: 0.2vmin; height: 4vmin; line-height: 4vmin; }
+  #grid .today span {
+    display: inline-block; width: 4.6vmin; height: 4.6vmin; line-height: 4.6vmin; border-radius: 50%;
+    background: #e4694f; color: #000; font-weight: bold;
+  }
+</style>
+</head>
+<body>
+<svg id="bg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
+<div id="frame"></div>
+
+<div id="stage">
+  <div id="head">
+    <div id="day"></div>
+    <div id="dateRow"><div class="rule l"></div><div id="date"></div><div class="rule r"></div></div>
+  </div>
+
+  <div id="clockRow">
+    <div class="card" id="h1">0</div><div class="card" id="h2">0</div>
+    <div class="colon"><i></i><i></i></div>
+    <div class="card" id="m1">0</div><div class="card" id="m2">0</div>
+    <div id="side">
+      <div id="ampm">AM</div>
+      <div id="secRow"><div class="card sm" id="s1">0</div><div class="card sm" id="s2">0</div></div>
+    </div>
+  </div>
+
+  <div id="toggle"><button id="b12" type="button">12H</button><button id="b24" type="button">24H</button></div>
+
+  <div id="panels">
+    <div class="panel" id="moonPanel">
+      <div class="kicker">Moon Phase</div>
+      <svg id="moonSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="phaseName"></div>
+      <div id="phaseInfo"></div>
+      <div id="phaseNext"></div>
+    </div>
+    <div class="panel" id="calPanel">
+      <div id="month"></div>
+      <div id="grid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(parent, name, attrs) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) { if (attrs.hasOwnProperty(k)) { e.setAttribute(k, attrs[k]); } }
+    parent.appendChild(e);
+    return e;
+  }
+  function $(id) { return document.getElementById(id); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+  /* ---------- Starry background ---------- */
+  var bg = $('bg');
+  var seed = 7;
+  function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  var i, g;
+  var colors = ['#f6e7c8', '#e8b04a', '#8fd6cd', '#e4694f'];
+  var groups = ['tw1', 'tw2', 'tw3'];
+  for (i = 0; i < 3; i++) {
+    g = el(bg, 'g', { 'class': groups[i] });
+    for (var j = 0; j < 22; j++) {
+      el(g, 'circle', { cx: rnd() * 1000, cy: rnd() * 1000, r: 1 + rnd() * 2.2,
+        fill: colors[Math.floor(rnd() * 4)], 'fill-opacity': 0.8 });
+    }
+  }
+  var sparkle = 'M0 -14 Q0 0 14 0 Q0 0 0 14 Q0 0 -14 0 Q0 0 0 -14 Z';
+  var spots = [[110, 150, '#e8b04a'], [900, 120, '#8fd6cd'], [70, 620, '#e4694f'], [940, 560, '#e8b04a'],
+               [160, 900, '#8fd6cd'], [860, 930, '#e4694f'], [500, 60, '#f6e7c8']];
+  for (i = 0; i < spots.length; i++) {
+    g = el(bg, 'g', { 'class': groups[i % 3] });
+    var p = el(g, 'path', { d: sparkle, fill: spots[i][2] });
+    p.setAttribute('transform', 'translate(' + spots[i][0] + ' ' + spots[i][1] + ') scale(' + (1 + (i % 3) * 0.5) + ')');
+  }
+
+  /* ---------- 12H / 24H ---------- */
+  var use24 = false;
+  try { use24 = (window.localStorage.getItem('clock24') === '1'); } catch (e) {}
+  function setMode(v) {
+    use24 = v;
+    try { window.localStorage.setItem('clock24', v ? '1' : '0'); } catch (e) {}
+    $('b12').className = v ? '' : 'on';
+    $('b24').className = v ? 'on' : '';
+    tick();
+  }
+  $('b12').addEventListener('click', function () { setMode(false); }, false);
+  $('b24').addEventListener('click', function () { setMode(true); }, false);
+
+  /* ---------- Digits ---------- */
+  function setDigit(id, v, animate) {
+    var c = $(id);
+    if (c.getAttribute('data-v') === v) { return; }
+    c.setAttribute('data-v', v);
+    c.textContent = v;
+    if (animate) {
+      c.className = 'card';
+      void c.offsetWidth;
+      c.className = 'card flip';
+    }
+  }
+
+  /* ---------- Moon ---------- */
+  var SYN = 29.530588853;
+  var moonSvg = $('moonSvg');
+  var halo = el(moonSvg, 'circle', { cx: 100, cy: 100, r: 88, fill: 'none', stroke: '#e8b04a', 'stroke-width': 1.2, 'stroke-dasharray': '2 6', 'stroke-linecap': 'round' });
+  var defs = el(moonSvg, 'defs', {});
+  var clip = el(defs, 'clipPath', { id: 'litclip' });
+  var clipPath = el(clip, 'path', { d: '' });
+  el(moonSvg, 'circle', { cx: 100, cy: 100, r: 70, fill: '#1b1a26', stroke: '#5b5870', 'stroke-width': 1.5 });
+  var litPath = el(moonSvg, 'path', { d: '', fill: '#f6e7c8' });
+  var craters = el(moonSvg, 'g', { 'clip-path': 'url(#litclip)' });
+  var cr = [[78, 80, 11], [112, 72, 7], [120, 112, 13], [90, 124, 8], [70, 108, 5], [104, 96, 4], [132, 86, 5]];
+  for (i = 0; i < cr.length; i++) {
+    el(craters, 'circle', { cx: cr[i][0], cy: cr[i][1], r: cr[i][2], fill: '#d9c79f' });
+  }
+  var sp = [[26, 40, '#e8b04a', 0.7], [176, 52, '#8fd6cd', 0.55], [172, 160, '#e4694f', 0.6], [30, 164, '#8fd6cd', 0.5]];
+  for (i = 0; i < sp.length; i++) {
+    var s = el(moonSvg, 'path', { d: sparkle, fill: sp[i][2] });
+    s.setAttribute('transform', 'translate(' + sp[i][0] + ' ' + sp[i][1] + ') scale(' + sp[i][3] + ')');
+  }
+
+  function moonFraction(now) {
+    var jd = now.getTime() / 86400000 + 2440587.5;
+    var f = ((jd - 2451550.1) / SYN) % 1;
+    return f < 0 ? f + 1 : f;
+  }
+  function lit(p) {
+    var R = 70, cx = 100, cy = 100;
+    var rx = Math.abs(Math.cos(2 * Math.PI * p)) * R;
+    var top = cy - R, bot = cy + R, d, sweep;
+    if (p < 0.5) {
+      sweep = (p < 0.25) ? 0 : 1;
+      d = 'M' + cx + ' ' + top + ' A' + R + ' ' + R + ' 0 0 1 ' + cx + ' ' + bot +
+          ' A' + rx.toFixed(2) + ' ' + R + ' 0 0 ' + sweep + ' ' + cx + ' ' + top + ' Z';
+    } else {
+      sweep = (p < 0.75) ? 0 : 1;
+      d = 'M' + cx + ' ' + top + ' A' + R + ' ' + R + ' 0 0 0 ' + cx + ' ' + bot +
+          ' A' + rx.toFixed(2) + ' ' + R + ' 0 0 ' + sweep + ' ' + cx + ' ' + top + ' Z';
+    }
+    return d;
+  }
+  function phaseName(p) {
+    if (p < 0.03 || p >= 0.97) { return 'New Moon'; }
+    if (p < 0.22) { return 'Waxing Crescent'; }
+    if (p < 0.28) { return 'First Quarter'; }
+    if (p < 0.47) { return 'Waxing Gibbous'; }
+    if (p < 0.53) { return 'Full Moon'; }
+    if (p < 0.72) { return 'Waning Gibbous'; }
+    if (p < 0.78) { return 'Last Quarter'; }
+    return 'Waning Crescent';
+  }
+  var MONTHS = ['January','February','March','April','May','June','July','August',
+                'September','October','November','December'];
+  var MSHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  function shortDate(ms) { var d = new Date(ms); return MSHORT[d.getMonth()] + ' ' + d.getDate(); }
+
+  function updateMoon(now) {
+    var p = moonFraction(now);
+    var d = lit(p);
+    litPath.setAttribute('d', d);
+    clipPath.setAttribute('d', d);
+    var pct = Math.round((1 - Math.cos(2 * Math.PI * p)) / 2 * 100);
+    $('phaseName').textContent = phaseName(p);
+    $('phaseInfo').textContent = pct + '% illuminated';
+    var toFull = ((0.5 - p + 1) % 1) * SYN;
+    var toNew = ((1 - p) % 1) * SYN;
+    var t = now.getTime();
+    $('phaseNext').innerHTML = 'Full moon ~ ' + shortDate(t + toFull * 86400000) +
+      '<br>New moon ~ ' + shortDate(t + toNew * 86400000);
+  }
+
+  /* ---------- Calendar ---------- */
+  function buildCalendar(now) {
+    var y = now.getFullYear(), m = now.getMonth(), today = now.getDate();
+    var first = new Date(y, m, 1).getDay();
+    var count = new Date(y, m + 1, 0).getDate();
+    var html = '', n;
+    var dow = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    for (n = 0; n < 7; n++) { html += '<div class="dow">' + dow[n] + '</div>'; }
+    for (n = 0; n < 42; n++) {
+      var day = n - first + 1;
+      if (day < 1 || day > count) { html += '<div></div>'; }
+      else if (day === today) { html += '<div class="today"><span>' + day + '</span></div>'; }
+      else { html += '<div>' + day + '</div>'; }
+    }
+    $('month').textContent = MONTHS[m] + ' ' + y;
+    $('grid').innerHTML = html;
+  }
+
+  /* ---------- Main tick ---------- */
+  var shownDay = '';
+  var shownMoonMin = -1;
+  function tick() {
+    var now = new Date();
+    var hr = now.getHours(), mi = now.getMinutes(), se = now.getSeconds();
+    var h = use24 ? hr : ((hr % 12) || 12);
+    var hs = pad(h), ms = pad(mi), ss = pad(se);
+    setDigit('h1', hs.charAt(0), true);
+    setDigit('h2', hs.charAt(1), true);
+    setDigit('m1', ms.charAt(0), true);
+    setDigit('m2', ms.charAt(1), true);
+    setDigit('s1', ss.charAt(0), false);
+    setDigit('s2', ss.charAt(1), false);
+    $('ampm').textContent = use24 ? '24H' : (hr < 12 ? 'AM' : 'PM');
+
+    var key = now.getFullYear() + '-' + now.getMonth() + '-' + now.getDate();
+    if (key !== shownDay) {
+      shownDay = key;
+      $('day').textContent = DAYS[now.getDay()];
+      $('date').textContent = MONTHS[now.getMonth()] + ' ' + now.getDate() + ' \u00B7 ' + now.getFullYear();
+      buildCalendar(now);
+    }
+    if (mi !== shownMoonMin) {
+      shownMoonMin = mi;
+      updateMoon(now);
+    }
+  }
+
+  setMode(use24);
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
