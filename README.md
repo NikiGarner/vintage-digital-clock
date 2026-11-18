@@ -1,1 +1,1 @@
-# art-deco-clock
+# vintage-digital-clock
