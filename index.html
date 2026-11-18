@@ -8,7 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Clock">
 <style>
-  /* Plain ES5 / CSS with -webkit- fallbacks so it runs on iPad 2 (iOS 9 Safari). */
+  /* Plain ES5 / CSS with -webkit- fallbacks so it runs on iPad 2 (iOS 9 Safari).
+     Colors below are the default palette; the THEME button swaps them via JS. */
   * { -webkit-box-sizing: border-box; box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
   body {
@@ -32,6 +33,14 @@
     content: ""; position: absolute; left: 1.1vmin; top: 1.1vmin; right: 1.1vmin; bottom: 1.1vmin;
     border: 0.25vmin solid #e4694f; border-radius: 2vmin;
   }
+
+  /* Little time-of-day buddy */
+  #buddy {
+    position: absolute; left: 4.5vmin; top: 4.5vmin; width: 14vmin; height: 14vmin;
+    -webkit-animation: bob 3s ease-in-out infinite alternate; animation: bob 3s ease-in-out infinite alternate;
+  }
+  @-webkit-keyframes bob { from { -webkit-transform: translateY(0); } to { -webkit-transform: translateY(1vmin); } }
+  @keyframes bob { from { transform: translateY(0); } to { transform: translateY(1vmin); } }
 
   #stage {
     position: absolute; left: 0; top: 0; width: 100%; height: 100%;
@@ -101,8 +110,9 @@
   .card.sm { width: 6.4vmin; height: 9.4vmin; margin: 0 0.35vmin; border-radius: 1vmin;
     font: bold 7vmin/9.4vmin "American Typewriter", Georgia, serif; color: #8fd6cd; }
 
-  /* 12H / 24H toggle */
-  #toggle { margin-top: 2.6vmin; display: -webkit-box; display: -webkit-flex; display: flex; }
+  /* Buttons */
+  #toggle { margin-top: 2.6vmin; display: -webkit-box; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; }
+  .grp { display: -webkit-box; display: -webkit-flex; display: flex; }
   #toggle button {
     -webkit-appearance: none; appearance: none; outline: none;
     font-family: "American Typewriter", Georgia, serif; font-weight: bold;
@@ -112,6 +122,7 @@
   }
   #b12 { border-radius: 3vmin 0 0 3vmin; border-right-width: 0.175vmin !important; }
   #b24 { border-radius: 0 3vmin 3vmin 0; border-left-width: 0.175vmin !important; }
+  #bTheme { margin-left: 3.2vmin; width: 22vmin !important; border-radius: 3vmin; font-size: 2.6vmin !important; }
   #toggle button.on { background: #e8b04a; color: #000; }
 
   /* Panels */
@@ -122,31 +133,64 @@
   .panel {
     position: relative; height: 100%;
     border: 0.4vmin solid #4aa39b; border-radius: 2.4vmin;
-    background: #0b0b0b; padding: 2vmin 2vmin 1.4vmin; text-align: center; overflow: hidden;
+    background: #0b0b0b; padding: 1.6vmin 2vmin 1.2vmin; text-align: center; overflow: hidden;
   }
   #moonPanel { -webkit-flex: 1; flex: 1; margin-right: 3vmin; border-color: #4aa39b; }
   #calPanel  { -webkit-flex: 1.45; flex: 1.45; border-color: #e4694f; }
   .kicker { font-size: 2vmin; letter-spacing: 0.7vmin; text-transform: uppercase; color: #4aa39b; }
-  #calPanel .kicker { display: none; }
-  #moonSvg { display: block; width: 24vmin; height: 24vmin; margin: 0 auto; }
-  #phaseName { font-family: "Snell Roundhand", "Apple Chancery", cursive; font-size: 5.2vmin; font-weight: bold; color: #f6e7c8; line-height: 1.1; }
-  #phaseInfo { margin-top: 0.8vmin; font-size: 2.1vmin; color: #8fd6cd; letter-spacing: 0.2vmin; }
-  #phaseNext { margin-top: 0.6vmin; font-size: 1.9vmin; color: #b9a98a; line-height: 1.35; }
+  #moonSvg { display: block; width: 19vmin; height: 19vmin; margin: 0 auto; }
+  #phaseName { font-family: "Snell Roundhand", "Apple Chancery", cursive; font-size: 4.8vmin; font-weight: bold; color: #f6e7c8; line-height: 1.1; }
+  #phaseInfo { margin-top: 0.4vmin; font-size: 2vmin; color: #8fd6cd; letter-spacing: 0.2vmin; }
+  #phaseNext { margin-top: 0.4vmin; font-size: 1.8vmin; color: #b9a98a; line-height: 1.35; }
+  #sunRow {
+    margin-top: 0.8vmin; font-size: 2.1vmin; color: #f6e7c8;
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    -webkit-justify-content: center; justify-content: center; -webkit-align-items: center; align-items: center;
+  }
+  .sun { display: -webkit-box; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; margin: 0 1.2vmin; }
+  .sun svg { width: 3.6vmin; height: 3.6vmin; margin-right: 0.6vmin; }
 
-  #month { font-family: "Snell Roundhand", "Apple Chancery", cursive; font-size: 6vmin; font-weight: bold; color: #e4694f; line-height: 1.1; margin-bottom: 0.8vmin; }
+  #month { font-family: "Snell Roundhand", "Apple Chancery", cursive; font-size: 5.4vmin; font-weight: bold; color: #e4694f; line-height: 1.1; margin-bottom: 0.4vmin; }
   #grid { width: 100%; }
   #grid:after { content: ""; display: block; clear: both; }
-  #grid div { float: left; width: 14.2857%; height: 5.3vmin; line-height: 5.3vmin; font-size: 2.7vmin; text-align: center; }
-  #grid .dow { font-size: 2.1vmin; color: #e8b04a; letter-spacing: 0.2vmin; height: 4vmin; line-height: 4vmin; }
+  #grid div { position: relative; float: left; width: 14.2857%; height: 4.6vmin; line-height: 4.6vmin; font-size: 2.5vmin; text-align: center; }
+  #grid .dow { font-size: 2vmin; color: #e8b04a; letter-spacing: 0.2vmin; height: 3.2vmin; line-height: 3.2vmin; }
   #grid .today span {
-    display: inline-block; width: 4.6vmin; height: 4.6vmin; line-height: 4.6vmin; border-radius: 50%;
+    display: inline-block; width: 4.2vmin; height: 4.2vmin; line-height: 4.2vmin; border-radius: 50%;
     background: #e4694f; color: #000; font-weight: bold;
+  }
+  #grid .hol:after {
+    content: ""; position: absolute; left: 50%; bottom: 0.2vmin; width: 0.95vmin; height: 0.95vmin;
+    margin-left: -0.475vmin; border-radius: 50%; background: #e8b04a;
+  }
+  #legend {
+    margin-top: 0.8vmin; font-size: 2vmin; font-style: italic; color: #b9a98a;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #legend b { font-weight: normal; font-style: normal; color: #e8b04a; letter-spacing: 0.3vmin; }
+
+  /* Landscape: tighten a bit so everything fits in 768px of height */
+  @media (orientation: landscape) {
+    #stage { padding: 4vmin; }
+    #day { font-size: 8vmin; }
+    #date { font-size: 2.6vmin; }
+    #clockRow { margin-top: 1.6vmin; }
+    .card { width: 11.8vmin; height: 17vmin; font: bold 12.6vmin/17vmin "American Typewriter", Georgia, serif; }
+    .colon { height: 17vmin; }
+    .colon i:nth-child(1) { top: 5.2vmin; }
+    .colon i:nth-child(2) { top: 9.9vmin; }
+    .card.sm { width: 5.8vmin; height: 8vmin; font: bold 6vmin/8vmin "American Typewriter", Georgia, serif; }
+    #ampm { margin-bottom: 1vmin; font-size: 2.8vmin; }
+    #toggle { margin-top: 1.6vmin; }
+    #toggle button { height: 5vmin; }
+    #panels { margin-top: 2.2vmin; height: 44vmin; }
   }
 </style>
 </head>
 <body>
 <svg id="bg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
 <div id="frame"></div>
+<svg id="buddy" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg>
 
 <div id="stage">
   <div id="head">
@@ -164,7 +208,10 @@
     </div>
   </div>
 
-  <div id="toggle"><button id="b12" type="button">12H</button><button id="b24" type="button">24H</button></div>
+  <div id="toggle">
+    <div class="grp"><button id="b12" type="button">12H</button><button id="b24" type="button">24H</button></div>
+    <button id="bTheme" type="button">THEME</button>
+  </div>
 
   <div id="panels">
     <div class="panel" id="moonPanel">
@@ -173,10 +220,21 @@
       <div id="phaseName"></div>
       <div id="phaseInfo"></div>
       <div id="phaseNext"></div>
+      <div id="sunRow">
+        <div class="sun">
+          <svg viewBox="0 0 24 24"><path class="f1" d="M5 15 A7 7 0 0 1 19 15 Z"/><line class="s2" x1="2" y1="15" x2="22" y2="15" stroke-width="1.6" stroke-linecap="round"/><line class="s1" x1="12" y1="3" x2="12" y2="5.5" stroke-width="1.6" stroke-linecap="round"/><line class="s1" x1="4.5" y1="6.5" x2="6.3" y2="8.3" stroke-width="1.6" stroke-linecap="round"/><line class="s1" x1="19.5" y1="6.5" x2="17.7" y2="8.3" stroke-width="1.6" stroke-linecap="round"/><path class="sl" d="M8.5 21 L12 18 L15.5 21" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="sunrise"></span>
+        </div>
+        <div class="sun">
+          <svg viewBox="0 0 24 24"><path class="f2" d="M5 15 A7 7 0 0 1 19 15 Z"/><line class="s1" x1="2" y1="15" x2="22" y2="15" stroke-width="1.6" stroke-linecap="round"/><line class="s2" x1="12" y1="3" x2="12" y2="5.5" stroke-width="1.6" stroke-linecap="round"/><line class="s2" x1="4.5" y1="6.5" x2="6.3" y2="8.3" stroke-width="1.6" stroke-linecap="round"/><line class="s2" x1="19.5" y1="6.5" x2="17.7" y2="8.3" stroke-width="1.6" stroke-linecap="round"/><path class="sl" d="M8.5 18.5 L12 21.5 L15.5 18.5" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="sunset"></span>
+        </div>
+      </div>
     </div>
     <div class="panel" id="calPanel">
       <div id="month"></div>
       <div id="grid"></div>
+      <div id="legend"></div>
     </div>
   </div>
 </div>
@@ -193,30 +251,73 @@
   function $(id) { return document.getElementById(id); }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
 
-  /* ---------- Starry background ---------- */
+  /* ===== Location for sunrise / sunset (West Jordan, Utah). Change for another place. ===== */
+  var LAT = 40.61, LON = -111.94;
+
+  /* ===== Color themes ===== */
+  var THEMES = [
+    { a1: '#e8b04a', a2: '#e4694f', a3: '#4aa39b', a3l: '#8fd6cd', text: '#f6e7c8', muted: '#b9a98a' },  /* Vintage */
+    { a1: '#ff8fb8', a2: '#ff5d9e', a3: '#3fc1c9', a3l: '#9fe8ec', text: '#ffe9f2', muted: '#d9a9bd' },  /* Pink & teal */
+    { a1: '#d4af37', a2: '#f1d98a', a3: '#b8962e', a3l: '#f1d98a', text: '#f8f0d8', muted: '#bba873' },  /* Cream & gold */
+    { a1: '#b79cff', a2: '#ff9fd0', a3: '#6fd6b5', a3l: '#b5f0dc', text: '#f1ecff', muted: '#b4a9d6' }   /* Lavender & mint */
+  ];
+  function themeCSS(p) {
+    return 'body{color:' + p.text + '}' +
+      '#day{color:' + p.a1 + '}#date{color:' + p.text + '}' +
+      '.rule{background:' + p.a2 + '}.rule:after{background:' + p.a3 + '}' +
+      '.card{color:' + p.text + '}.card.sm{color:' + p.a3l + '}' +
+      '.colon i{background:' + p.a2 + '}' +
+      '#ampm{border-color:' + p.a1 + ';color:' + p.a1 + '}' +
+      '#toggle button{border-color:' + p.a1 + ';color:' + p.a1 + '}' +
+      '#toggle button.on{background:' + p.a1 + ';color:#000}' +
+      '#frame{border-color:' + p.a1 + '}#frame:before{border-color:' + p.a2 + '}' +
+      '#moonPanel{border-color:' + p.a3 + '}#calPanel{border-color:' + p.a2 + '}' +
+      '.kicker{color:' + p.a3 + '}' +
+      '#phaseName{color:' + p.text + '}#phaseInfo{color:' + p.a3l + '}#phaseNext{color:' + p.muted + '}' +
+      '#sunRow{color:' + p.text + '}' +
+      '#month{color:' + p.a2 + '}#grid .dow{color:' + p.a1 + '}' +
+      '#grid .today span{background:' + p.a2 + ';color:#000}#grid .hol:after{background:' + p.a1 + '}' +
+      '#legend{color:' + p.muted + '}#legend b{color:' + p.a1 + '}' +
+      '.ft{fill:' + p.text + '}.f1{fill:' + p.a1 + '}.f2{fill:' + p.a2 + '}.f3{fill:' + p.a3 + '}.fl{fill:' + p.a3l + '}' +
+      '.s1{stroke:' + p.a1 + '}.s2{stroke:' + p.a2 + '}.sl{stroke:' + p.a3l + '}';
+  }
+  var themeStyle = document.createElement('style');
+  document.getElementsByTagName('head')[0].appendChild(themeStyle);
+  var themeIdx = 0;
+  try { themeIdx = parseInt(window.localStorage.getItem('clockTheme'), 10) || 0; } catch (e) {}
+  if (themeIdx < 0 || themeIdx >= THEMES.length) { themeIdx = 0; }
+  function applyTheme() {
+    themeStyle.textContent = themeCSS(THEMES[themeIdx]);
+    try { window.localStorage.setItem('clockTheme', String(themeIdx)); } catch (e) {}
+  }
+  $('bTheme').addEventListener('click', function () {
+    themeIdx = (themeIdx + 1) % THEMES.length;
+    applyTheme();
+  }, false);
+
+  /* ===== Starry background ===== */
   var bg = $('bg');
   var seed = 7;
   function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
   var i, g;
-  var colors = ['#f6e7c8', '#e8b04a', '#8fd6cd', '#e4694f'];
+  var starClasses = ['ft', 'f1', 'fl', 'f2'];
   var groups = ['tw1', 'tw2', 'tw3'];
   for (i = 0; i < 3; i++) {
     g = el(bg, 'g', { 'class': groups[i] });
     for (var j = 0; j < 22; j++) {
       el(g, 'circle', { cx: rnd() * 1000, cy: rnd() * 1000, r: 1 + rnd() * 2.2,
-        fill: colors[Math.floor(rnd() * 4)], 'fill-opacity': 0.8 });
+        'class': starClasses[Math.floor(rnd() * 4)], 'fill-opacity': 0.8 });
     }
   }
   var sparkle = 'M0 -14 Q0 0 14 0 Q0 0 0 14 Q0 0 -14 0 Q0 0 0 -14 Z';
-  var spots = [[110, 150, '#e8b04a'], [900, 120, '#8fd6cd'], [70, 620, '#e4694f'], [940, 560, '#e8b04a'],
-               [160, 900, '#8fd6cd'], [860, 930, '#e4694f'], [500, 60, '#f6e7c8']];
+  var spots = [[900, 120, 'fl'], [70, 620, 'f2'], [940, 560, 'f1'], [160, 900, 'fl'], [860, 930, 'f2'], [500, 60, 'ft'], [250, 330, 'f1']];
   for (i = 0; i < spots.length; i++) {
     g = el(bg, 'g', { 'class': groups[i % 3] });
-    var p = el(g, 'path', { d: sparkle, fill: spots[i][2] });
-    p.setAttribute('transform', 'translate(' + spots[i][0] + ' ' + spots[i][1] + ') scale(' + (1 + (i % 3) * 0.5) + ')');
+    var sp0 = el(g, 'path', { d: sparkle, 'class': spots[i][2] });
+    sp0.setAttribute('transform', 'translate(' + spots[i][0] + ' ' + spots[i][1] + ') scale(' + (1 + (i % 3) * 0.5) + ')');
   }
 
-  /* ---------- 12H / 24H ---------- */
+  /* ===== 12H / 24H ===== */
   var use24 = false;
   try { use24 = (window.localStorage.getItem('clock24') === '1'); } catch (e) {}
   function setMode(v) {
@@ -224,12 +325,13 @@
     try { window.localStorage.setItem('clock24', v ? '1' : '0'); } catch (e) {}
     $('b12').className = v ? '' : 'on';
     $('b24').className = v ? 'on' : '';
+    shownMin = -1;
     tick();
   }
   $('b12').addEventListener('click', function () { setMode(false); }, false);
   $('b24').addEventListener('click', function () { setMode(true); }, false);
 
-  /* ---------- Digits ---------- */
+  /* ===== Digits ===== */
   function setDigit(id, v, animate) {
     var c = $(id);
     if (c.getAttribute('data-v') === v) { return; }
@@ -242,23 +344,65 @@
     }
   }
 
-  /* ---------- Moon ---------- */
+  /* ===== Buddy: changes with the time of day ===== */
+  var buddy = $('buddy');
+  var buddyState = '';
+  var INK = '#2a1a10';
+  function drawBuddy(state) {
+    while (buddy.firstChild) { buddy.removeChild(buddy.firstChild); }
+    var k, a, len;
+    if (state === 'day' || state === 'eve') {
+      len = (state === 'day') ? 46 : 40;
+      for (k = 0; k < 12; k++) {
+        a = k * 30 * Math.PI / 180;
+        el(buddy, 'line', { x1: 50 + Math.sin(a) * 36, y1: 50 - Math.cos(a) * 36,
+          x2: 50 + Math.sin(a) * len, y2: 50 - Math.cos(a) * len,
+          'class': (state === 'day') ? 's1' : 's2', 'stroke-width': 4, 'stroke-linecap': 'round' });
+      }
+    }
+    el(buddy, 'circle', { cx: 50, cy: 50, r: 28, 'class': state === 'day' ? 'f1' : (state === 'eve' ? 'f2' : 'ft') });
+    if (state === 'night') {
+      el(buddy, 'circle', { cx: 60, cy: 62, r: 5, fill: '#000', 'fill-opacity': 0.1 });
+      el(buddy, 'circle', { cx: 38, cy: 36, r: 3.5, fill: '#000', 'fill-opacity': 0.1 });
+    }
+    el(buddy, 'circle', { cx: 33, cy: 56, r: 4.5, fill: '#ff8fa0', 'fill-opacity': 0.6 });
+    el(buddy, 'circle', { cx: 67, cy: 56, r: 4.5, fill: '#ff8fa0', 'fill-opacity': 0.6 });
+    if (state === 'day') {
+      el(buddy, 'circle', { cx: 41, cy: 47, r: 3.2, fill: INK });
+      el(buddy, 'circle', { cx: 59, cy: 47, r: 3.2, fill: INK });
+      el(buddy, 'path', { d: 'M40 57 Q50 68 60 57', fill: 'none', stroke: INK, 'stroke-width': 2.6, 'stroke-linecap': 'round' });
+    } else if (state === 'eve') {
+      el(buddy, 'path', { d: 'M36 48 Q41 42 46 48', fill: 'none', stroke: INK, 'stroke-width': 2.6, 'stroke-linecap': 'round' });
+      el(buddy, 'path', { d: 'M54 48 Q59 42 64 48', fill: 'none', stroke: INK, 'stroke-width': 2.6, 'stroke-linecap': 'round' });
+      el(buddy, 'path', { d: 'M42 58 Q50 64 58 58', fill: 'none', stroke: INK, 'stroke-width': 2.6, 'stroke-linecap': 'round' });
+    } else {
+      el(buddy, 'path', { d: 'M36 46 Q41 51 46 46', fill: 'none', stroke: INK, 'stroke-width': 2.6, 'stroke-linecap': 'round' });
+      el(buddy, 'path', { d: 'M54 46 Q59 51 64 46', fill: 'none', stroke: INK, 'stroke-width': 2.6, 'stroke-linecap': 'round' });
+      el(buddy, 'ellipse', { cx: 50, cy: 59, rx: 3, ry: 2.4, fill: INK, 'fill-opacity': 0.8 });
+      var z1 = el(buddy, 'text', { x: 74, y: 30, 'class': 'fl', 'font-size': 16, 'font-style': 'italic', 'font-family': 'Georgia, serif', 'font-weight': 'bold' });
+      z1.appendChild(document.createTextNode('z'));
+      var z2 = el(buddy, 'text', { x: 85, y: 16, 'class': 'fl', 'font-size': 11, 'font-style': 'italic', 'font-family': 'Georgia, serif', 'font-weight': 'bold' });
+      z2.appendChild(document.createTextNode('z'));
+    }
+  }
+
+  /* ===== Moon ===== */
   var SYN = 29.530588853;
   var moonSvg = $('moonSvg');
-  var halo = el(moonSvg, 'circle', { cx: 100, cy: 100, r: 88, fill: 'none', stroke: '#e8b04a', 'stroke-width': 1.2, 'stroke-dasharray': '2 6', 'stroke-linecap': 'round' });
+  el(moonSvg, 'circle', { cx: 100, cy: 100, r: 88, fill: 'none', 'class': 's1', 'stroke-width': 1.2, 'stroke-dasharray': '2 6', 'stroke-linecap': 'round' });
   var defs = el(moonSvg, 'defs', {});
   var clip = el(defs, 'clipPath', { id: 'litclip' });
   var clipPath = el(clip, 'path', { d: '' });
   el(moonSvg, 'circle', { cx: 100, cy: 100, r: 70, fill: '#1b1a26', stroke: '#5b5870', 'stroke-width': 1.5 });
-  var litPath = el(moonSvg, 'path', { d: '', fill: '#f6e7c8' });
+  var litPath = el(moonSvg, 'path', { d: '', 'class': 'ft' });
   var craters = el(moonSvg, 'g', { 'clip-path': 'url(#litclip)' });
   var cr = [[78, 80, 11], [112, 72, 7], [120, 112, 13], [90, 124, 8], [70, 108, 5], [104, 96, 4], [132, 86, 5]];
   for (i = 0; i < cr.length; i++) {
-    el(craters, 'circle', { cx: cr[i][0], cy: cr[i][1], r: cr[i][2], fill: '#d9c79f' });
+    el(craters, 'circle', { cx: cr[i][0], cy: cr[i][1], r: cr[i][2], fill: '#000', 'fill-opacity': 0.12 });
   }
-  var sp = [[26, 40, '#e8b04a', 0.7], [176, 52, '#8fd6cd', 0.55], [172, 160, '#e4694f', 0.6], [30, 164, '#8fd6cd', 0.5]];
+  var sp = [[26, 40, 'f1', 0.7], [176, 52, 'fl', 0.55], [172, 160, 'f2', 0.6], [30, 164, 'fl', 0.5]];
   for (i = 0; i < sp.length; i++) {
-    var s = el(moonSvg, 'path', { d: sparkle, fill: sp[i][2] });
+    var s = el(moonSvg, 'path', { d: sparkle, 'class': sp[i][2] });
     s.setAttribute('transform', 'translate(' + sp[i][0] + ' ' + sp[i][1] + ') scale(' + sp[i][3] + ')');
   }
 
@@ -313,27 +457,129 @@
       '<br>New moon ~ ' + shortDate(t + toNew * 86400000);
   }
 
-  /* ---------- Calendar ---------- */
+  /* ===== Sunrise / sunset (standard almanac algorithm) ===== */
+  function sunEvent(y, mo, d, rise) {
+    var rad = Math.PI / 180;
+    var N = Math.floor((Date.UTC(y, mo, d) - Date.UTC(y, 0, 0)) / 86400000);
+    var lngHour = LON / 15;
+    var t = N + ((rise ? 6 : 18) - lngHour) / 24;
+    var M = 0.9856 * t - 3.289;
+    var L = M + 1.916 * Math.sin(M * rad) + 0.020 * Math.sin(2 * M * rad) + 282.634;
+    L = ((L % 360) + 360) % 360;
+    var RA = Math.atan(0.91764 * Math.tan(L * rad)) / rad;
+    RA = ((RA % 360) + 360) % 360;
+    RA += Math.floor(L / 90) * 90 - Math.floor(RA / 90) * 90;
+    RA /= 15;
+    var sinDec = 0.39782 * Math.sin(L * rad);
+    var cosDec = Math.cos(Math.asin(sinDec));
+    var cosH = (Math.cos(90.833 * rad) - sinDec * Math.sin(LAT * rad)) / (cosDec * Math.cos(LAT * rad));
+    if (cosH > 1 || cosH < -1) { return null; }
+    var H = rise ? 360 - Math.acos(cosH) / rad : Math.acos(cosH) / rad;
+    H /= 15;
+    var T = H + RA - 0.06571 * t - 6.622;
+    var UT = (((T - lngHour) % 24) + 24) % 24;
+    return new Date(Date.UTC(y, mo, d) + UT * 3600000);   /* only the time of day is shown */
+  }
+  function fmtTime(dt) {
+    if (!dt) { return '--:--'; }
+    var h = dt.getHours(), m = dt.getMinutes();
+    if (use24) { return pad(h) + ':' + pad(m); }
+    return ((h % 12) || 12) + ':' + pad(m) + ' ' + (h < 12 ? 'AM' : 'PM');
+  }
+  function updateSun(now) {
+    var y = now.getFullYear(), mo = now.getMonth(), d = now.getDate();
+    $('sunrise').textContent = fmtTime(sunEvent(y, mo, d, true));
+    $('sunset').textContent = fmtTime(sunEvent(y, mo, d, false));
+  }
+
+  /* ===== Holidays ===== */
+  function nthWeekday(y, m, wd, n) {
+    var first = new Date(y, m, 1).getDay();
+    return 1 + ((wd - first + 7) % 7) + (n - 1) * 7;
+  }
+  function lastWeekday(y, m, wd) {
+    var last = new Date(y, m + 1, 0);
+    return last.getDate() - ((last.getDay() - wd + 7) % 7);
+  }
+  function easter(y) {
+    var a = y % 19, b = Math.floor(y / 100), c = y % 100;
+    var d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+    var g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+    var ii = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * ii - h - k) % 7;
+    var m = Math.floor((a + 11 * h + 22 * l) / 451);
+    var month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+    var day = ((h + l - 7 * m + 114) % 31) + 1;
+    return [month, day];
+  }
+  function holidays(y) {
+    var e = easter(y);
+    return [
+      [0, 1, 'New Year\u2019s Day'],
+      [0, nthWeekday(y, 0, 1, 3), 'MLK Day'],
+      [1, 14, 'Valentine\u2019s Day'],
+      [1, nthWeekday(y, 1, 1, 3), 'Presidents\u2019 Day'],
+      [e[0], e[1], 'Easter'],
+      [4, nthWeekday(y, 4, 0, 2), 'Mother\u2019s Day'],
+      [4, lastWeekday(y, 4, 1), 'Memorial Day'],
+      [5, 19, 'Juneteenth'],
+      [5, nthWeekday(y, 5, 0, 3), 'Father\u2019s Day'],
+      [6, 4, 'Independence Day'],
+      [8, nthWeekday(y, 8, 1, 1), 'Labor Day'],
+      [9, 31, 'Halloween'],
+      [10, 11, 'Veterans Day'],
+      [10, nthWeekday(y, 10, 4, 4), 'Thanksgiving'],
+      [11, 25, 'Christmas'],
+      [11, 31, 'New Year\u2019s Eve']
+    ];
+  }
+
+  /* ===== Calendar ===== */
   function buildCalendar(now) {
     var y = now.getFullYear(), m = now.getMonth(), today = now.getDate();
     var first = new Date(y, m, 1).getDay();
     var count = new Date(y, m + 1, 0).getDate();
-    var html = '', n;
+    var hl = holidays(y), holDays = {}, n, todayHol = '';
+    for (n = 0; n < hl.length; n++) {
+      if (hl[n][0] === m) {
+        holDays[hl[n][1]] = true;
+        if (hl[n][1] === today) { todayHol = hl[n][2]; }
+      }
+    }
+    var html = '';
     var dow = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
     for (n = 0; n < 7; n++) { html += '<div class="dow">' + dow[n] + '</div>'; }
     for (n = 0; n < 42; n++) {
       var day = n - first + 1;
       if (day < 1 || day > count) { html += '<div></div>'; }
       else if (day === today) { html += '<div class="today"><span>' + day + '</span></div>'; }
+      else if (holDays[day]) { html += '<div class="hol">' + day + '</div>'; }
       else { html += '<div>' + day + '</div>'; }
     }
     $('month').textContent = MONTHS[m] + ' ' + y;
     $('grid').innerHTML = html;
+
+    /* Legend: today's holiday, or the next one coming up */
+    var todayMs = new Date(y, m, today).getTime();
+    var all = holidays(y).concat(holidays(y + 1).map(function (h) { return [h[0] + 12, h[1], h[2]]; }));
+    var legend = '';
+    if (todayHol) {
+      legend = '<b>TODAY</b> \u00B7 ' + todayHol;
+    } else {
+      for (n = 0; n < all.length; n++) {
+        var hy = all[n][0] >= 12 ? y + 1 : y, hm = all[n][0] % 12;
+        var hms = new Date(hy, hm, all[n][1]).getTime();
+        if (hms > todayMs) {
+          legend = '<b>NEXT</b> \u00B7 ' + all[n][2] + ', ' + MSHORT[hm] + ' ' + all[n][1];
+          break;
+        }
+      }
+    }
+    $('legend').innerHTML = legend;
   }
 
-  /* ---------- Main tick ---------- */
+  /* ===== Main tick ===== */
   var shownDay = '';
-  var shownMoonMin = -1;
+  var shownMin = -1;
   function tick() {
     var now = new Date();
     var hr = now.getHours(), mi = now.getMinutes(), se = now.getSeconds();
@@ -354,12 +600,16 @@
       $('date').textContent = MONTHS[now.getMonth()] + ' ' + now.getDate() + ' \u00B7 ' + now.getFullYear();
       buildCalendar(now);
     }
-    if (mi !== shownMoonMin) {
-      shownMoonMin = mi;
+    if (mi !== shownMin) {
+      shownMin = mi;
       updateMoon(now);
+      updateSun(now);
+      var st = (hr >= 6 && hr < 18) ? 'day' : ((hr >= 18 && hr < 22) ? 'eve' : 'night');
+      if (st !== buddyState) { buddyState = st; drawBuddy(st); }
     }
   }
 
+  applyTheme();
   setMode(use24);
   setInterval(tick, 1000);
 })();
